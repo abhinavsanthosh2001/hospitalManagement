@@ -4,6 +4,8 @@ import com.hospital.patient.dto.PatientRequestDTO;
 import com.hospital.patient.dto.PatientResponseDTO;
 import com.hospital.patient.exception.EmailExistsException;
 import com.hospital.patient.exception.PatientNotFoundException;
+import com.hospital.patient.grpc.BillingServiceGrpcClient;
+import com.hospital.patient.kafka.KafkaProducer;
 import com.hospital.patient.model.Patient;
 import com.hospital.patient.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,8 @@ public class PatientService {
 
     private final PatientRepository patientRepository;
     private final ModelMapper modelMapper;
+    private final BillingServiceGrpcClient billingServiceGrpcClient;
+    private final KafkaProducer kafkaProducer;
 
     public List<PatientResponseDTO> getAllPatients() {
         List<Patient> patients = patientRepository.findAll();
@@ -35,6 +39,10 @@ public class PatientService {
         }
         Patient patient = modelMapper.map(patientRequestDTO, Patient.class);
         Patient saved = patientRepository.save(patient);
+
+        billingServiceGrpcClient.createBillingAccount(saved.getId().toString(), saved.getName(), saved.getEmail());
+        kafkaProducer.sendEvent(saved);
+
         return modelMapper.map(saved, PatientResponseDTO.class);
     }
 

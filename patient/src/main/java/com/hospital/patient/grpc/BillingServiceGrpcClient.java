@@ -22,6 +22,7 @@ public class BillingServiceGrpcClient {
         log.info("Connecting to billing service at {}:{}", serverAddress, serverPort);
         ManagedChannel channel = ManagedChannelBuilder.forAddress(serverAddress, serverPort).usePlaintext().build();
         billingServiceBlockingStub = BillingServiceGrpc.newBlockingStub(channel);
+        
     }
 
     public BillingResponse createBillingAccount(String patientId, String name, String email){
@@ -32,7 +33,9 @@ public class BillingServiceGrpcClient {
                 .setPatientId(patientId)
                 .build();
 
-        return billingServiceBlockingStub.createBillingAccount(request);
+        BillingResponse billingResponse = billingServiceBlockingStub.createBillingAccount(request);
+        log.info("Billing account created: {}", billingResponse);
+        return billingResponse;
 
 
     }
